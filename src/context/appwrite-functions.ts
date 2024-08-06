@@ -30,4 +30,22 @@ const getGamesByUser = async ({
     .catch((e) => e);
 };
 
-export { createGame, getGamesByUser };
+const getGameByGameId = async ({
+  gameId,
+}: {
+  gameId: string;
+}): Promise<{ totals: number; documents: Game[] }> => {
+  if (!gameId) {
+    console.warn("gameId is required");
+    return { totals: 0, documents: [] };
+  }
+
+  return await databases
+    .listDocuments(databaseIds.main, collectionIds.main.games, [
+      Query.equal("$id", gameId),
+    ])
+    .then((res) => res)
+    .catch((e) => e);
+};
+
+export { createGame, getGamesByUser, getGameByGameId };

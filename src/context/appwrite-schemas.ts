@@ -7,6 +7,7 @@ export type GameStatus =
 export type Game = {
   status: GameStatus;
   userId: string;
+  name: string;
   $id: string;
   $tenant: string;
   $createdAt: string;

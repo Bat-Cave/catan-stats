@@ -13,6 +13,7 @@ import {
 import { createGame, getGamesByUser } from "@/context/appwrite-functions";
 import { Game } from "@/context/appwrite-schemas";
 import { useAppwrite } from "@/context/use-appwrite";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const HomePage = () => {
@@ -74,15 +75,16 @@ const HomePage = () => {
               {games.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {games.map((game) => (
-                    <div
+                    <Link
                       key={game.$id}
-                      className="flex flex-row justify-between"
+                      href={`/game/${game.$id}`}
+                      className="flex flex-row justify-between hover:bg-neutral-300 transition-colors"
                     >
                       <div>{game.$id}</div>
                       <div>
                         <GameStatusBadge status={game.status} />
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (

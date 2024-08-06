@@ -5,10 +5,10 @@ import { Badge } from "./ui/badge";
 const gameStatusBadgeVariants = cva("", {
   variants: {
     status: {
-      "in-progress": "bg-green-500 text-neutral-50",
-      finished: "bg-blue-500 text-neutral-50",
-      "not-started": "bg-neutral-500 text-neutral-50",
-      cancelled: "bg-red-500 text-neutral-50",
+      "in-progress": "bg-emerald-500 hover:bg-emerald-600 text-neutral-50",
+      finished: "bg-violet-500 hover:bg-violet-600 text-neutral-50",
+      "not-started": "bg-indigo-500 hover:bg-indigo-600 text-neutral-50",
+      cancelled: "bg-red-500 hover:bg-red-600 text-neutral-50",
     },
   },
   defaultVariants: {
