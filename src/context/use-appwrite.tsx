@@ -34,7 +34,6 @@ function AppwriteProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       setInitialized(true);
-
       getAccount();
     };
 
