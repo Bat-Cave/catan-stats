@@ -16,3 +16,9 @@ export type Game = {
   $databaseId: string;
   $collectionId: string;
 };
+
+export type Roll = {
+  gameId: string;
+  date: number;
+  roll: number;
+};

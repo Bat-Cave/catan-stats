@@ -1,7 +1,7 @@
 "use client";
 
 import { account as appwriteAccount } from "@/app/appwrite";
-import { Models } from "appwrite";
+import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
   type ReactNode,
@@ -9,54 +9,51 @@ import {
   useEffect,
   useState,
 } from "react";
+import { getGamesByUser } from "./appwrite-functions";
 
 const AppwriteContext = createContext<any | null>(null);
 
 function AppwriteProvider({ children }: { children: ReactNode }) {
-  const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(
-    null
-  );
 
-  const getAccount = async () => {
-    setLoading(true);
-    let user = null;
-    try {
-      user = (await appwriteAccount.get()) as Models.User<Models.Preferences>;
-    } catch (e) {
-      console.log(e);
-    }
-    setUser(user);
-    setLoading(false);
-  };
+  const {
+    data: user,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => await appwriteAccount.get(),
+  });
 
-  useEffect(() => {
-    const init = async () => {
-      setInitialized(true);
-      getAccount();
-    };
-
-    if (!initialized) {
-      init();
-    }
-  }, [initialized]);
+  const { data: games } = useQuery({
+    queryKey: ["games"],
+    queryFn: async () => await getGamesByUser({ userId: user?.$id! }),
+    enabled: !!user,
+  });
 
   const logout = async () => {
     setLoading(true);
     await appwriteAccount.deleteSessions();
-    setUser(null);
     setLoading(false);
   };
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     await appwriteAccount.createEmailPasswordSession(email, password);
-    await getAccount();
+    await refetch();
+    setLoading(false);
   };
 
   return (
-    <AppwriteContext.Provider value={{ user, loading, logout, login }}>
+    <AppwriteContext.Provider
+      value={{
+        user,
+        loading: loading || isLoading,
+        logout,
+        login,
+        games: games?.documents || [],
+      }}
+    >
       {children}
     </AppwriteContext.Provider>
   );
