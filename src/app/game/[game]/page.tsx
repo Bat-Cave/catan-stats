@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import useLocalStorage from "@/app/hooks/use-local-storage";
 import { GameStatusBadge } from "@/components/game-status-badge";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -14,7 +15,7 @@ import {
 import { getGameByGameId } from "@/context/appwrite-functions";
 import { Roll } from "@/context/appwrite-schemas";
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, isToday } from "date-fns";
 import { Dot } from "lucide-react";
 import {
   ChartContainer,
@@ -71,9 +72,17 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+type LocalGameData = {
+  gameId: string;
+  rolls: Roll[];
+};
+
 export default function Page({ params }: { params: { game: string } }) {
   const { game } = params;
-  const [rolls, setRolls] = useLocalStorage<Roll[]>("rolls", []);
+  const [localGameData, setLocalGameData] = useLocalStorage<LocalGameData>(
+    `game-${game}`,
+    { gameId: game!, rolls: [] }
+  );
 
   const { data } = useQuery({
     queryKey: ["games"],
@@ -86,14 +95,18 @@ export default function Page({ params }: { params: { game: string } }) {
   const handleAddDiceRoll = (num: number) => {
     const roll = {
       gameId: gameData?.$id || "",
-      date: Date.now(),
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
       roll: num,
     };
 
-    setRolls([...rolls, roll]);
+    setLocalGameData({
+      gameId: gameData?.$id || "",
+      rolls: [...localGameData.rolls, roll],
+    });
   };
 
-  const rollCounts = rolls.reduce(
+  const rollCounts = localGameData.rolls.reduce(
     (acc, roll) => {
       acc[roll.roll as keyof typeof acc] += 1;
       return acc;
@@ -116,10 +129,8 @@ export default function Page({ params }: { params: { game: string } }) {
   const chartData = Object.entries(rollCounts).map(([key, rolls]) => ({
     name: key,
     rolls,
-    fill: chartConfig[key].color,
+    fill: chartConfig[key as unknown as keyof typeof chartConfig].color,
   }));
-
-  console.log(chartData);
 
   return (
     <main className="w-full grow max-w-5xl mx-auto flex flex-col pt-16">
@@ -169,7 +180,7 @@ export default function Page({ params }: { params: { game: string } }) {
                   <AspectRatio key={`dice-number-${number}`} ratio={1 / 1}>
                     <Button
                       onClick={() => handleAddDiceRoll(number)}
-                      className="w-full h-full text-3xl flex flex-col"
+                      className="w-full h-full text-3xl flex flex-col -space-y-2"
                     >
                       <span>{number}</span>
                       <span className="text-xs flex -space-x-3">
@@ -189,6 +200,49 @@ export default function Page({ params }: { params: { game: string } }) {
               <CardFooter></CardFooter>
             </Card>
           </div>
+          <Card className="mt-2">
+            <CardHeader>
+              <CardTitle>Roll History</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col-reverse gap-1">
+              <AnimatePresence>
+                {localGameData.rolls.map((roll) => (
+                  <motion.div
+                    key={`${roll.gameId}-${roll.date}`}
+                    className="rounded-lg overflow-hidden"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+                    style={{
+                      background: `linear-gradient(to right, ${
+                        chartConfig[
+                          roll.roll as unknown as keyof typeof chartConfig
+                        ].color
+                      } 0%, transparent 30%, transparent 50%, transparent 100%)`,
+                    }}
+                  >
+                    <div className="flex justify-between p-[2px] ">
+                      <div className="w-8 h-8">
+                        <AspectRatio
+                          ratio={1 / 1}
+                          className="bg-black rounded-md text-white w-full h-full flex flex-col justify-center items-center"
+                        >
+                          <span>{roll.roll}</span>
+                        </AspectRatio>
+                      </div>
+                      <p>
+                        {isToday(new Date(roll.date))
+                          ? format(new Date(roll.date), "pp")
+                          : format(new Date(roll.date), "PPpp")}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </CardContent>
+            <CardFooter></CardFooter>
+          </Card>
         </div>
       )}
     </main>

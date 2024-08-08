@@ -19,6 +19,7 @@ export type Game = {
 
 export type Roll = {
   gameId: string;
-  date: number;
+  date: string;
   roll: number;
+  id: string;
 };
